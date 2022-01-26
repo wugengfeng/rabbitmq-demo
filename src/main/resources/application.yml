@@ -1,0 +1,8 @@
+server:
+  port: 8081
+spring:
+  rabbitmq:
+    port: 5672
+    host: 121.37.23.172
+    username: rabbitmq
+    password: wgf123
