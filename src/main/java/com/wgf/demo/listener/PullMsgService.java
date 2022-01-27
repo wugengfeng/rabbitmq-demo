@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * @description: 手动拉取消息
@@ -33,41 +34,48 @@ public class PullMsgService {
      * @param queueName
      * @param count
      */
-    public void pull(String queueName, Integer count) {
+    public void pull(String queueName, Integer count, Consumer<List<String>> consumer) {
 
-        while (true) {
-            List<String> msgList = rabbitTemplate.execute(new ChannelCallback<List<String>>() {
-                @Override
-                public List<String> doInRabbit(Channel channel) throws Exception {
-                    List<String> result   = new ArrayList<>();
-                    long         start    = System.currentTimeMillis();
-                    long         end;
-                    GetResponse  response = null;
-                    while (true) {
-                        try {
-                            end      = System.currentTimeMillis();
-                            response = channel.basicGet(queueName, false);
-                            if (Objects.isNull(response)) {
-                                // 没有消息
+        rabbitTemplate.execute(new ChannelCallback<Object>() {
+
+            @Override
+            public Object doInRabbit(Channel channel) throws Exception {
+                List<String> msgList      = new ArrayList<>();
+                long         start        = System.currentTimeMillis();
+                long         end;
+                GetResponse  response;
+                GetResponse  lastResponse = null;
+
+                while (true) {
+                    try {
+                        end = System.currentTimeMillis();
+                        response = channel.basicGet(queueName, false);
+
+                        if (response == null) {
+                            if (msgList.size() == 0) {
                                 log.info("没有消息");
+                                TimeUnit.SECONDS.sleep(5);
+                                start = System.currentTimeMillis();
+                                continue;
                             }
-
-                            // 获取消息
+                        } else {
                             String msg = new String(response.getBody(), "utf-8");
-                            result.add(msg);
-
-                            if (((start - end) > 5000 && result.size() > 0) || result.size() >= 10) {
-                                channel.basicAck(response.getEnvelope().getDeliveryTag(), true);
-                                return result;
-                            }
-                        } catch (Exception e) {
-                            channel.basicNack(response.getEnvelope().getDeliveryTag(), true, true);
+                            lastResponse = response;
+                            msgList.add(msg);
                         }
+
+                        if (((end -start) > 5000 && msgList.size() > 0) || msgList.size() >= 10) {
+                            consumer.accept(msgList);
+                            channel.basicAck(lastResponse.getEnvelope().getDeliveryTag(), true);
+                            start = System.currentTimeMillis();
+                            msgList.clear();
+                        }
+
+                    } catch (Exception e) {
+                        channel.basicNack(lastResponse.getEnvelope().getDeliveryTag(), true, true);
                     }
                 }
-            });
-
-            System.out.println(msgList.size());
-        }
+            }
+        });
     }
 }

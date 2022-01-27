@@ -21,7 +21,7 @@ public class QeueuTest {
 
     @Test
     public void simpleSend() throws InterruptedException {
-        for (int i = 0; i < 105; i++) {
+        for (int i = 0; i < 15; i++) {
             amqpTemplate.convertAndSend(QueueConfig.QUEUE_NAME, i + "");
            // TimeUnit.SECONDS.sleep(1);
         }
@@ -30,6 +30,6 @@ public class QeueuTest {
 
     @Test
     public void recive() {
-        pullMsgService.pull(QueueConfig.QUEUE_NAME, 10);
+        pullMsgService.pull(QueueConfig.QUEUE_NAME, 10, (list) -> System.out.println(list.size()));
     }
 }

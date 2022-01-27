@@ -3,6 +3,6 @@ server:
 spring:
   rabbitmq:
     port: 5672
-    host: localhost
-    username:
-    password:
+    host: 121.37.23.172
+    username: rabbitmq
+    password: wgf123
