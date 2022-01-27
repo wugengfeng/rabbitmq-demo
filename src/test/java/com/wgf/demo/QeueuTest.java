@@ -1,6 +1,7 @@
 package com.wgf.demo;
 
 import com.wgf.demo.config.QueueConfig;
+import com.wgf.demo.listener.PullMsgService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -15,11 +16,20 @@ public class QeueuTest {
     @Autowired
     AmqpTemplate amqpTemplate;
 
+    @Autowired
+    PullMsgService pullMsgService;
+
     @Test
     public void simpleSend() throws InterruptedException {
-        for (int i = 0; i < 10; i++) {
-            amqpTemplate.convertAndSend(QueueConfig.QUEUE_NAME, i);
-            TimeUnit.SECONDS.sleep(1);
+        for (int i = 0; i < 105; i++) {
+            amqpTemplate.convertAndSend(QueueConfig.QUEUE_NAME, i + "");
+           // TimeUnit.SECONDS.sleep(1);
         }
+    }
+
+
+    @Test
+    public void recive() {
+        pullMsgService.pull(QueueConfig.QUEUE_NAME, 10);
     }
 }
