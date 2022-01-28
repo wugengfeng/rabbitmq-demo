@@ -6,3 +6,6 @@ spring:
     host: 121.37.23.172
     username: rabbitmq
     password: wgf123
+    listener:
+      simple:
+        prefetch: 5

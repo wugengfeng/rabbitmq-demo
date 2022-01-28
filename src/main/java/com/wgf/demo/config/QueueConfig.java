@@ -10,12 +10,23 @@ public class QueueConfig {
     public static final String QUEUE_NAME = "test_queue";
 
     /**
+     * 手动拉取消息测试队列
+     */
+    public static final String BASIC_GET = "basic_get";
+
+    /**
      * 简单定义消息队列
      * @return
      */
     @Bean
-    public Queue simpleQueue() {
+    public Queue testQueue() {
         // 不指定交换机则使用默认交换机将消息转发到队列
-        return QueueBuilder.durable("test_queue").build();
+        return QueueBuilder.durable(QUEUE_NAME).build();
+    }
+
+    @Bean
+    public Queue basicGetQueue() {
+        // 不指定交换机则使用默认交换机将消息转发到队列
+        return QueueBuilder.durable(BASIC_GET).build();
     }
 }

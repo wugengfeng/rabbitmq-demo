@@ -3,7 +3,6 @@ package com.wgf.demo.listener;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.rabbit.core.ChannelCallback;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,17 +23,18 @@ import java.util.function.Consumer;
 public class PullMsgService {
 
     @Autowired
-    AmqpAdmin rabbitAdmin;
-
-    @Autowired
     RabbitTemplate rabbitTemplate;
 
-
     /**
-     * @param queueName
-     * @param count
+     * 主动拉取消息
+     * rabbitmq 提供 channel.basicGet API用于主动拉取消息
+     *
+     * @param queueName 队列名称
+     * @param count     每一批次获取总数
+     * @param timeOut   超时时间，超时强制返回
+     * @param consumer  业务实现
      */
-    public void pull(String queueName, Integer count, Consumer<List<String>> consumer) {
+    public void pull(String queueName, Integer count, int timeOut, Consumer<List<String>> consumer) {
 
         rabbitTemplate.execute(new ChannelCallback<Object>() {
 
@@ -48,7 +48,7 @@ public class PullMsgService {
 
                 while (true) {
                     try {
-                        end = System.currentTimeMillis();
+                        end      = System.currentTimeMillis();
                         response = channel.basicGet(queueName, false);
 
                         if (response == null) {
@@ -64,7 +64,8 @@ public class PullMsgService {
                             msgList.add(msg);
                         }
 
-                        if (((end -start) > 5000 && msgList.size() > 0) || msgList.size() >= 10) {
+                        long step = end - start;
+                        if ((step > timeOut && msgList.size() > 0) || msgList.size() >= count) {
                             consumer.accept(msgList);
                             channel.basicAck(lastResponse.getEnvelope().getDeliveryTag(), true);
                             start = System.currentTimeMillis();
