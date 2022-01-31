@@ -1,0 +1,1 @@
+[wiki](https://wugengfeng.github.io/2022/01/25/RabbitMQ/)
