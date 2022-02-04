@@ -3,12 +3,10 @@ server:
 spring:
   rabbitmq:
     port: 5672
-    host: 121.37.23.172
+    host: localhost
     username: rabbitmq
     password: wgf123
     publisher-confirm-type: correlated  # 发布消息成功到交换器后会触发回调方法
-    publisher-confirms: true  # 开启发送失败退回
-    publisher-returns: true   # 开启发送失败退回
     listener:
       simple:
         prefetch: 5
