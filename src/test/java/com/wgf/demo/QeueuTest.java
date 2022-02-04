@@ -171,7 +171,19 @@ public class QeueuTest {
 
 
     /**
-     * 文章目录 6
+     * 文章目录 6.3
+     * ack重试次数
+     * 需要打开重试配置
+     */
+    @Test
+    public void retryTest() throws InterruptedException {
+        this.rabbitTemplate.convertAndSend(RetryConfig.RETRY_EXCHANGE, RetryConfig.ROUTING_KEY, "test");
+        TimeUnit.SECONDS.sleep(60);
+    }
+
+
+    /**
+     * 文章目录 7
      * 死信队列
      * 关闭手动ack
      */
@@ -189,7 +201,7 @@ public class QeueuTest {
 
 
     /**
-     * 文章目录 6.3.3
+     * 文章目录 7.3.3
      * 死信队列 拒收消息
      * 打开手动ack
      */
