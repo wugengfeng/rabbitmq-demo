@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * 备份交换机
  */
 @Slf4j
-@Component
+//@Component
 public class BackUpListener {
     @RabbitListener(queues = BackUpConfig.QUEUE)
     public void listenerProduct(String msg) {

@@ -15,7 +15,7 @@ import java.util.Map;
  * 文章目录：9.3
  * 惰性队列
  */
-@Configuration
+//@Configuration
 public class LazyConfig {
     public static final String LAZY_QUEUE  = "lazy.queue";
     public static final String LAZY_EXCHANGE  = "lazy_exchange";

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 /**
  * 备份交换机配置
  */
-@Component
+//@Component
 public class BackUpConfig {
     /**
      * 备份交换机配置

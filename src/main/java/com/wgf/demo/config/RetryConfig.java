@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
  * 重试需要把手动ack打开
  * MessageRecoverer#recover  当重试次数达到配置上限时的回调策略，可以投递到其他队列或者丢弃
  */
-@Configuration
+//@Configuration
 public class RetryConfig {
     public static final String RETRY_EXCHANGE = "retry.queue";
     public static final String RETRY_QUEUE    = "retry.queue";

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 文章目录 5.2
  */
-@Configuration
+//@Configuration
 public class AckQueueConfig {
     public static final String ACK_QUEUE   = "ack.queue";
     public static final String ROUTING_KEY = "ack";

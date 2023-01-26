@@ -14,7 +14,7 @@ import java.util.Map;
  * 文章目录 7.5.2
  * 延迟队列配置
  */
-@Configuration
+//@Configuration
 public class DelayedConfig {
     public static final String DELAYED_EXCHANGE = "delayed_exchange";
     public static final String DELAYED_QUEUE  = "delayed.queue";

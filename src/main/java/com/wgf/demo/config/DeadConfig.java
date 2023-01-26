@@ -14,21 +14,38 @@ import java.util.Map;
  * 文章目录：7
  * 死信队列配置
  */
-@Configuration
+//@Configuration
 public class DeadConfig {
+
     /**
      * 死信配置
      */
     public static final String DEAD_EXCHANGE = "dead_exchange";
-    public static final String DEAD_QUEUE  = "dead.queue";
-    public static final String DEAD_ROUTING_KEY   = "dead";
+    public static final String DEAD_QUEUE = "dead.queue";
+    public static final String DEAD_ROUTING_KEY = "dead";
 
     /**
      * 正常交换机与队列配置
      */
-    public static final String ORDER_EXCHANGE = "order_exchange";
-    public static final String ORDER_QUEUE  = "order.queue";
-    public static final String ORDER_ROUTING_KEY   = "order";
+    public static final String NORMAL_EXCHANGE = "normal_exchange";
+
+    /**
+     * 有TTL过期的队列
+     */
+    public static final String TTL_QUEUE = "dead.ttl.queue";
+    public static final String TTL_ROUTING_KEY = "ttl";
+
+    /**
+     * 有长度的队列
+     */
+    public static final String LENGTH_QUEUE = "dead.length.queue";
+    public static final String LENGTH_ROUTING_KEY = "length";
+
+    /**
+     * 拒绝队列
+     */
+    public static final String NACK_QUEUE = "dead.nack.queue";
+    public static final String NACK_ROUTING_KEY = "nack";
 
     /**
      * 创建死信交换机
@@ -52,6 +69,7 @@ public class DeadConfig {
 
     /**
      * 绑定死信队列
+     *
      * @param directQueue
      * @param directExchange
      * @return
@@ -63,71 +81,96 @@ public class DeadConfig {
 
     /**
      * 正常交换机
+     *
      * @return
      */
     @Bean
-    public DirectExchange orderExchange() {
-        return new DirectExchange(ORDER_EXCHANGE);
+    public DirectExchange normalExchange() {
+        return new DirectExchange(NORMAL_EXCHANGE);
     }
 
     /**
-     *
-     * 正常队列
+     * TTL过期队列
      */
     @Bean
-    public Queue orderQueue() {
+    public Queue deadTtlQueue() {
         // 正常队列绑定死信队列
         Map<String, Object> args = new HashMap<>(8);
         // 设置TTL过期
-        // args.put("x-message-ttl", 5000);
-
-        // 设置队列最大长度
-        // args.put("x-max-length", 4);
+        args.put("x-message-ttl", 10000);
 
         // 声明死信队列路由键
         args.put("x-dead-letter-routing-key", DEAD_ROUTING_KEY);
         // 声明死信队列交换机，消息异常投递到此交换机
         args.put("x-dead-letter-exchange", DEAD_EXCHANGE);
-        return new Queue(ORDER_QUEUE, true, false, false, args);
+        return new Queue(TTL_QUEUE, true, false, false, args);
     }
 
     /**
-     * 正常队列绑定交换机
-     * @param orderQueue
-     * @param orderExchange
+     * 有长度限制的队列
      * @return
      */
     @Bean
-    public Binding bingOrderQueue(Queue orderQueue, DirectExchange orderExchange) {
-        return BindingBuilder.bind(orderQueue).to(orderExchange).with(ORDER_ROUTING_KEY);
+    public Queue deadLengthQueue() {
+        // 正常队列绑定死信队列
+        Map<String, Object> args = new HashMap<>(8);
+
+        // 设置队列最大长度
+        args.put("x-max-length", 4);
+
+        // 声明死信队列路由键
+        args.put("x-dead-letter-routing-key", DEAD_ROUTING_KEY);
+        // 声明死信队列交换机，消息异常投递到此交换机
+        args.put("x-dead-letter-exchange", DEAD_EXCHANGE);
+        return new Queue(LENGTH_QUEUE, true, false, false, args);
     }
 
-
     /**
-     * 文章目录 7.4
+     * 拒绝队列，监听时NACK
+     * @return
      */
-    public static final String ORDER_QUEUE_2  = "order2.queue";
-    public static final String ORDER_ROUTING_KEY_2   = "order2";
-    
     @Bean
-    public Queue order2Queue() {
+    public Queue deadNackQueue() {
+        // 正常队列绑定死信队列
         Map<String, Object> args = new HashMap<>(8);
         // 声明死信队列路由键
         args.put("x-dead-letter-routing-key", DEAD_ROUTING_KEY);
         // 声明死信队列交换机，消息异常投递到此交换机
         args.put("x-dead-letter-exchange", DEAD_EXCHANGE);
-        return new Queue(ORDER_QUEUE_2, true, false, false, args);
+        return new Queue(NACK_QUEUE, true, false, false, args);
     }
 
-
     /**
-     * 正常队列绑定交换机
-     * @param order2Queue
-     * @param orderExchange
+     * TTL队列绑定交换机
+     *
+     * @param deadTtlQueue
+     * @param normalExchange
      * @return
      */
     @Bean
-    public Binding bingOrder2Queue(Queue order2Queue, DirectExchange orderExchange) {
-        return BindingBuilder.bind(order2Queue).to(orderExchange).with(ORDER_ROUTING_KEY_2);
+    public Binding bingDeadTtlQueue(Queue deadTtlQueue, DirectExchange normalExchange) {
+        return BindingBuilder.bind(deadTtlQueue).to(normalExchange).with(TTL_ROUTING_KEY);
+    }
+
+    /**
+     * LENGTH队列绑定交换机
+     * @param deadLengthQueue
+     * @param normalExchange
+     * @return
+     */
+    @Bean
+    public Binding bingDeadLengthQueue(Queue deadLengthQueue, DirectExchange normalExchange) {
+        return BindingBuilder.bind(deadLengthQueue).to(normalExchange).with(LENGTH_ROUTING_KEY);
+    }
+
+    /**
+     * NACK队列绑定交换机
+     * @param deadNackQueue
+     * @param normalExchange
+     * @return
+     */
+    @Bean
+    public Binding bingDeadNackQueue(Queue deadNackQueue, DirectExchange normalExchange) {
+        return BindingBuilder.bind(deadNackQueue).to(normalExchange).with(NACK_ROUTING_KEY);
     }
 }

@@ -15,7 +15,7 @@ import java.io.IOException;
  * 手动ack确认消息消费
  */
 @Slf4j
-@Component
+//@Component
 public class AckListener {
 
     @RabbitListener(queues = AckQueueConfig.ACK_QUEUE)

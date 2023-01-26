@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * 延迟队列监听器
  */
 @Slf4j
-@Component
+//@Component
 public class DelayedListener {
     // 注释手动ack模式
     @RabbitListener(queues = DelayedConfig.DELAYED_QUEUE)

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-@Configuration
+//@Configuration
 public class QueueConfig {
     public static final String QUEUE_NAME = "test_queue";
     public static final String TTL_QUEUE  = "ttl_queue";

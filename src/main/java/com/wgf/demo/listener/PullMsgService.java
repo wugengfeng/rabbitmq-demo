@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  * @create: 2022-01-27 15:14
  **/
 @Slf4j
-@Component
+//@Component
 public class PullMsgService {
 
     @Autowired

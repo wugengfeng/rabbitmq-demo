@@ -16,7 +16,7 @@ import java.util.Map;
  * @author: ken 😃
  * @create: 2022-01-28 11:24
  **/
-@Configuration
+//@Configuration
 public class HeadersConfig {
     public static final String HEADERS_EXCHANGE = "headers_exchange";
     public static final String HEADERS_QUEUE_1  = "headers.queue1";

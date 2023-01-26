@@ -2,9 +2,13 @@ package com.wgf.demo;
 
 import com.wgf.demo.config.*;
 import com.wgf.demo.listener.PullMsgService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,8 +26,40 @@ public class QeueuTest {
     @Autowired
     RabbitTemplate rabbitTemplate;
 
-    @Autowired
+    //@Autowired
     PullMsgService pullMsgService;
+
+    @Test
+    public void testCallback() {
+        //correlationDataId相当于消息的唯一表示
+        UUID correlationDataId = UUID.randomUUID();
+        // 这里设置的id是给ConfirmCallback使用的
+        CorrelationData correlationData = new CorrelationData(correlationDataId.toString());
+        //发送MQ
+        rabbitTemplate.convertAndSend(DirectConfig.DIRECT_EXCHANGE, "test-queue", "test", (message) -> {
+            // 这里设置的id是给 ReturnCallback 使用的
+            message.getMessageProperties().setMessageId(correlationData.getId());
+            return message;
+        }, correlationData);
+    }
+
+
+    /**
+     * 发送持久化消息
+     */
+    @Test
+    public void persistenceTest() {
+        // 消息持久化
+        MessagePostProcessor messagePostProcessor = new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                message.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+                return message;
+            }
+        };
+
+        rabbitTemplate.convertAndSend(QueueConfig.QUEUE_NAME, "test".getBytes(), messagePostProcessor);
+    }
 
     /**
      * 文章目录：3
@@ -82,9 +118,9 @@ public class QeueuTest {
      */
     @Test
     public void sendTopic() throws InterruptedException {
-        for (int i = 0; i < 2; i++) {
-            rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE, TopicConfig.ROUTING_KEY, i + "");
-        }
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE, TopicConfig.ROUTING_KEY, TopicConfig.ROUTING_KEY);
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE, "topic.hello", "topic.hello");
+        rabbitTemplate.convertAndSend(TopicConfig.TOPIC_EXCHANGE, "topic.hi.hello", "topic.hi.hello");
         TimeUnit.SECONDS.sleep(10);
     }
 
@@ -107,7 +143,7 @@ public class QeueuTest {
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setHeader("color", "black");
         SimpleMessageConverter messageConverter = new SimpleMessageConverter();
-        Message                message          = messageConverter.toMessage("test1", messageProperties);
+        Message message = messageConverter.toMessage("test1", messageProperties);
         rabbitTemplate.convertAndSend(HeadersConfig.HEADERS_EXCHANGE, null, message);
 
         messageProperties.setHeader("aging", "fast");
@@ -183,72 +219,77 @@ public class QeueuTest {
 
 
     /**
-     * 文章目录 7
-     * 死信队列
-     * 关闭手动ack
+     * 死信队列： 消息TTL过期自动转入死信队列
      */
     @Test
-    public void ddlDeadTest() {
+    @SneakyThrows
+    public void deadTtlTest() {
         IntStream.range(0, 10).forEach(line -> {
-            this.rabbitTemplate.convertAndSend(DeadConfig.ORDER_EXCHANGE, DeadConfig.ORDER_ROUTING_KEY, "test:" + line);
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-
-    /**
-     * 文章目录 7.3.3
-     * 死信队列 拒收消息
-     * 打开手动ack
-     */
-    @Test
-    public void nackDeadTest() throws InterruptedException {
-        IntStream.range(0, 15).forEach(line -> {
-            //correlationDataId相当于消息的唯一表示
-            String msgId = UUID.randomUUID().toString();
-            this.send(msgId, DeadConfig.ORDER_EXCHANGE, DeadConfig.ORDER_ROUTING_KEY, "test:" + line);
-        });
-        TimeUnit.SECONDS.sleep(15);
-    }
-
-
-    /**
-     * 文章目录 7.4
-     * 基于死信队列实现延迟队列
-     */
-    @Test
-    public void delayTest() throws InterruptedException {
-        IntStream.range(0, 10).forEach(line -> {
-            int    ttl = 60000 - (line * 5000);
+            int ttl = 5000;
             String msg = "delay:" + line;
 
-            rabbitTemplate.convertAndSend(DeadConfig.ORDER_EXCHANGE, DeadConfig.ORDER_ROUTING_KEY_2, msg, correlationData -> {
-                // 动态设置ttl
+            rabbitTemplate.convertAndSend(DeadConfig.NORMAL_EXCHANGE, DeadConfig.TTL_ROUTING_KEY, msg);
+            log.info("发送一条时长: {} 毫秒信息给队列: {}  内容: {}", ttl, DeadConfig.TTL_QUEUE, msg);
+        });
+        TimeUnit.SECONDS.sleep(20);
+    }
+
+
+    /**
+     * 死信队列：队列满了消息转入死信队列
+     */
+    @Test
+    @SneakyThrows
+    public void deadLengthTest() {
+        for (int i = 0; i < 10; i++) {
+            rabbitTemplate.convertAndSend(DeadConfig.NORMAL_EXCHANGE, DeadConfig.LENGTH_ROUTING_KEY, i + "");
+        }
+        TimeUnit.SECONDS.sleep(10);
+    }
+
+
+    /**
+     * 死信队列：消息拒收转入死信队列
+     */
+    @Test
+    @SneakyThrows
+    public void deadNackTest() {
+        for (int i = 0; i < 3; i++) {
+            rabbitTemplate.convertAndSend(DeadConfig.NORMAL_EXCHANGE, DeadConfig.NACK_ROUTING_KEY, i + "");
+        }
+        TimeUnit.SECONDS.sleep(10);
+    }
+
+
+    /**
+     * 原生延迟队列缺陷
+     */
+    @Test
+    public void ttlMsgTest() throws InterruptedException {
+        IntStream.range(0, 4).forEach(line -> {
+            int ttl = 60000 - (line * 5000);
+            String msg = "delay:" + line;
+
+            rabbitTemplate.convertAndSend(TtlQueueConfig.TTL_EXCHANGE, TtlQueueConfig.TTL_ROUTING_KEY, msg, correlationData -> {
+                // 动态设置消息ttl
                 correlationData.getMessageProperties().setExpiration(String.valueOf(ttl));
                 return correlationData;
             });
 
-            log.info("发送一条时长: {} 毫秒信息给队列: {}  内容: {}", ttl, DeadConfig.ORDER_QUEUE_2, msg);
+
+            log.info("发送一条时长: {} 毫秒信息给延迟队列: {}  内容: {}", ttl, TtlQueueConfig.TTL_QUEUE, msg);
         });
         TimeUnit.SECONDS.sleep(70);
     }
 
-
     /**
-     * 文章目录：7.5.2
-     * 延迟队列
-     *
-     * @throws InterruptedException
+     * 延迟交换机
      */
     @Test
     public void delayedTest() throws InterruptedException {
         IntStream.range(0, 10).forEach(line -> {
-            int    delay = 60000 - (line * 5000);
-            String msg   = "delay:" + line;
+            int delay = 60000 - (line * 5000);
+            String msg = "delay:" + line;
 
             rabbitTemplate.convertAndSend(DelayedConfig.DELAYED_EXCHANGE, DelayedConfig.DELAYED_ROUTING_KEY, msg, correlationData -> {
                 // 设置消息的延迟时间 单位ms
@@ -276,10 +317,10 @@ public class QeueuTest {
                 temp = 10;
             }
 
-            int    priority = temp;
-            String msg      = "优先级:" + priority;
+            int priority = temp;
+            String msg = "优先级:" + priority;
 
-            rabbitTemplate.convertAndSend(DirectConfig.DIRECT_EXCHANGE, PriorityConfig.ROUTING_KEY, msg, correlationData -> {
+            rabbitTemplate.convertAndSend(PriorityConfig.PRIORITY_EXCHANGE, PriorityConfig.ROUTING_KEY, msg, correlationData -> {
                 // 设置队列优先级
                 correlationData.getMessageProperties().setPriority(priority);
                 return correlationData;
@@ -307,8 +348,10 @@ public class QeueuTest {
      * 备份交换机
      */
     @Test
+    @SneakyThrows
     public void backUpTest() {
         rabbitTemplate.convertAndSend(BackUpConfig.EXCHANGE, BackUpConfig.ROUTING_KEY, "正常商品消息");
         rabbitTemplate.convertAndSend(BackUpConfig.EXCHANGE, "test", "没有路由键的商品消息");
+        TimeUnit.SECONDS.sleep(10);
     }
 }

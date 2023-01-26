@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * @author: ken 😃
  * @create: 2022-01-28 11:24
  **/
-@Configuration
+//@Configuration
 public class FanoutConfig {
     public static final String FANOUT_EXCHANGE = "fanout_exchange";
     public static final String FANOUT_QUEUE_1  = "fanout.queue_1";

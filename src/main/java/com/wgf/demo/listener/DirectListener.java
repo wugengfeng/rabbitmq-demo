@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * @create: 2022-01-28 10:48
  **/
 @Slf4j
-@Component
+//@Component
 public class DirectListener {
     @RabbitListener(queues = DirectConfig.DIRECT_QUEUE)
     public void receive(String msg) {

@@ -16,13 +16,14 @@ import org.springframework.context.annotation.Configuration;
  * @author: ken 😃
  * @create: 2022-01-28 10:21
  **/
-@Configuration
+//@Configuration
 public class TopicConfig {
 
     public static final String TOPIC_EXCHANGE = "topic_exchange";
-    public static final String TOPIC_QUEUE_1  = "topic.queue1";
-    public static final String TOPIC_QUEUE_2  = "topic.queue2";
-    public static final String ROUTING_KEY    = "topic.test";
+    public static final String TOPIC_QUEUE_1 = "topic.queue1";
+    public static final String TOPIC_QUEUE_2 = "topic.queue2";
+    public static final String ROUTING_KEY = "topic.test";
+    public static final String ROUTING_KEY2 = "topic.#";
 
     /**
      * 创建队列
@@ -75,6 +76,6 @@ public class TopicConfig {
      */
     @Bean
     public Binding bindTopicQueue2(Queue topicQueue2, TopicExchange topicExchange) {
-        return BindingBuilder.bind(topicQueue2).to(topicExchange).with("topic.*");
+        return BindingBuilder.bind(topicQueue2).to(topicExchange).with(ROUTING_KEY2);
     }
 }

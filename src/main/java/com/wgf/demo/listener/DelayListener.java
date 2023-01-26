@@ -11,12 +11,12 @@ import org.springframework.stereotype.Component;
  * 基于死信队列实现的延迟队列监听
  */
 @Slf4j
-@Component
+//@Component
 public class DelayListener {
     
     // 注释手动ack模式
-    @RabbitListener(queues = DeadConfig.DEAD_QUEUE)
+/*    @RabbitListener(queues = DeadConfig.DEAD_QUEUE)
     public void listener(String msg) {
         log.info("死信队列 {} 接收信息:{}", DeadConfig.ORDER_QUEUE_2, msg);
-    }
+    }*/
 }

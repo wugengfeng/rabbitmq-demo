@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @create: 2022-01-28 10:48
  **/
 @Slf4j
-@Component
+//@Component
 public class FanoutListener {
     @RabbitListener(queues = FanoutConfig.FANOUT_QUEUE_1)
     public void receive(String msg) {

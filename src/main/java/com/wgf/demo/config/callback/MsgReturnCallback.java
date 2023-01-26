@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 public class MsgReturnCallback implements RabbitTemplate.ReturnCallback {
     @Override
     public void returnedMessage(Message message, int replyCode, String replyText, String exchange, String routingKey) {
-        log.info("ReturnCallback unroutable messages, message = {} , replyCode = {} , replyText = {} , exchange = {} , routingKey = {} ", message, replyCode, replyText, exchange, routingKey);
+        // 获取消息id
+        // String   messageId = message.getMessageProperties().getMessageId();
+        //log.info("ReturnCallback unroutable messages, message = {} , replyCode = {} , replyText = {} , exchange = {} , routingKey = {} ", message, replyCode, replyText, exchange, routingKey);
     }
 }

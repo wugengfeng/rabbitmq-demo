@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 消费重试
  */
 @Slf4j
-@Component
+//@Component
 public class RetryListener {
     private AtomicInteger count = new AtomicInteger(0);
 
